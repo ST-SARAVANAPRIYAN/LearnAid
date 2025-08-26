@@ -17,7 +17,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.models.user import User, Student, Faculty
 from app.models.course import Course, Chapter
-from app.models.exam import Exam, ExamQuestion, ExamResult, StudentAnswer
+from app.models.exam import Exam, ExamQuestion, ExamResult, ExamResponse
 from app.schemas.course import (
     CourseCreate, CourseUpdate, CourseResponse,
     ChapterCreate, ChapterUpdate, ChapterResponse,
