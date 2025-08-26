@@ -60,10 +60,12 @@ class Settings(BaseSettings):
             logger.warning(f"Error parsing file types: {e}")
             return [".pdf", ".doc", ".docx", ".txt"]
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False,
+        "extra": "ignore"  # Allow extra fields
+    }
 
 
 @lru_cache()

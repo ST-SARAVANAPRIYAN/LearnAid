@@ -109,7 +109,7 @@ class StudentBase(BaseModel):
     student_id: str = Field(..., min_length=5, max_length=20)
     class_name: str = Field(..., min_length=2, max_length=100)
     semester: int = Field(..., ge=1, le=8)
-    academic_year: str = Field(..., regex=r'^\d{4}-\d{2}$')
+    academic_year: str = Field(..., pattern=r'^\d{4}-\d{2}$')
     cgpa: Optional[str] = Field(None, max_length=5)
     batch_year: int = Field(..., ge=2020, le=2030)
 
@@ -131,7 +131,7 @@ class StudentUpdate(BaseModel):
     """Schema for updating student information."""
     class_name: Optional[str] = Field(None, min_length=2, max_length=100)
     semester: Optional[int] = Field(None, ge=1, le=8)
-    academic_year: Optional[str] = Field(None, regex=r'^\d{4}-\d{2}$')
+    academic_year: Optional[str] = Field(None, pattern=r'^\d{4}-\d{2}$')
     cgpa: Optional[str] = Field(None, max_length=5)
 
 

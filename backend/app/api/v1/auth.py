@@ -28,13 +28,84 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @router.post("/login", response_model=Token)
-async def login(
+async def login_json(
+    login_request: LoginRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    User login endpoint (JSON).
+    Accepts username/email and password via JSON, returns JWT tokens.
+    """
+    try:
+        # Find user by username or email
+        user = db.query(User).filter(
+            (User.username == login_request.username) | 
+            (User.email == login_request.username)
+        ).first()
+        
+        if not user:
+            logger.warning(f"Login attempt with non-existent username: {login_request.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Verify password
+        if not verify_password(login_request.password, user.hashed_password):
+            logger.warning(f"Failed login attempt for user: {user.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Check if user is active
+        if not user.is_active:
+            logger.warning(f"Login attempt by inactive user: {user.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account is disabled",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Create tokens
+        access_token_expires = timedelta(minutes=settings.jwt_access_token_expire_minutes)
+        access_token = create_access_token(
+            data={"sub": str(user.id), "username": user.username, "role": user.role.value},
+            expires_delta=access_token_expires
+        )
+        refresh_token = create_refresh_token(
+            data={"sub": str(user.id), "username": user.username}
+        )
+        
+        logger.info(f"Successful login for user: {user.username}")
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": settings.jwt_access_token_expire_minutes * 60
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Login failed"
+        )
+
+
+@router.post("/login-form", response_model=Token)
+async def login_form(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
     """
-    User login endpoint.
-    Accepts username/email and password, returns JWT tokens.
+    User login endpoint (Form).
+    Accepts username/email and password via form data, returns JWT tokens.
     """
     try:
         # Find user by username or email
