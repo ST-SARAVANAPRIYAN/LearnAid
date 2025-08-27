@@ -16,6 +16,9 @@ import Profile from './pages/Profile';
 import WelcomePage from './pages/Welcome';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentPerformanceAnalytics from './pages/StudentPerformanceAnalytics';
+import StudentCourses from './pages/StudentCourses';
+import StudentCIAResults from './pages/StudentCIAResults';
+import StudentTasks from './pages/StudentTasks';
 import MCQTestComponent from './components/MCQTestComponent';
 import Login from './pages/Login';
 import { AuthProvider } from './contexts/AuthContext';
@@ -101,6 +104,9 @@ const App: React.FC = () => {
                         {/* Student Routes */}
                         <Route path="/student-dashboard" element={<StudentDashboard />} />
                         <Route path="/student-performance" element={<StudentPerformanceAnalytics />} />
+                        <Route path="/student/courses" element={<StudentCourses />} />
+                        <Route path="/student/cia-results" element={<StudentCIAResults />} />
+                        <Route path="/student/tasks" element={<StudentTasks />} />
                         <Route path="/test/:assignmentId" element={<MCQTestComponent assignmentId={1} onComplete={() => window.location.href = '/app/student-dashboard'} />} />
                         
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />

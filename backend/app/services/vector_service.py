@@ -107,21 +107,31 @@ class FAISSVectorStore:
             self.index_path.parent.mkdir(parents=True, exist_ok=True)
             
             # Try to load existing index
-            if self.index_path.with_suffix('.index').exists():
-                self.index = faiss.read_index(str(self.index_path.with_suffix('.index')))
+            index_file = self.index_path.with_suffix('.index')
+            metadata_file = self.index_path.with_suffix('.metadata')
+            
+            if index_file.exists():
+                self.index = faiss.read_index(str(index_file))
                 # Load metadata
-                metadata_path = self.index_path.with_suffix('.metadata')
-                if metadata_path.exists():
-                    with open(metadata_path, 'r') as f:
+                if metadata_file.exists():
+                    with open(metadata_file, 'r') as f:
                         self.metadata = json.load(f)
                 logger.info(f"Loaded existing FAISS index with {self.index.ntotal} vectors")
             else:
                 # Create new index
                 self.index = faiss.IndexFlatL2(self.dimension)
                 logger.info(f"Created new FAISS index with dimension {self.dimension}")
+                # Save empty index
+                self._save_index()
                 
         except Exception as e:
             logger.error(f"Failed to initialize FAISS index: {e}")
+            # Create a simple index as fallback
+            try:
+                self.index = faiss.IndexFlatL2(self.dimension)
+                logger.info("Created fallback FAISS index")
+            except Exception as fallback_error:
+                logger.error(f"Failed to create fallback index: {fallback_error}")
     
     def add_documents(self, chunks: List[DocumentChunk], embeddings: np.ndarray):
         """Add document chunks to the vector store"""
@@ -200,23 +210,37 @@ class VectorStoreService:
         self.embedding_service = EmbeddingService(embedding_model)
         self.vector_store = FAISSVectorStore()
     
-    def chunk_text(self, text: str, chunk_size: int = 500, overlap: int = 50) -> List[str]:
-        """Split text into overlapping chunks"""
+    def chunk_text(self, text: str, chunk_size: int = 500, overlap: int = 100) -> List[str]:
+        """Split text into overlapping chunks - Updated to match PDF service chunking"""
         if len(text) <= chunk_size:
             return [text]
         
         chunks = []
         start = 0
+        text_length = len(text)
         
-        while start < len(text):
-            end = min(start + chunk_size, len(text))
+        while start < text_length:
+            end = min(start + chunk_size, text_length)
             chunk = text[start:end]
-            chunks.append(chunk.strip())
             
-            if end == len(text):
+            # Try to break at word boundary if we're not at the end
+            if end < text_length and not chunk.endswith(' '):
+                # Find the last space within the chunk to avoid breaking words
+                last_space = chunk.rfind(' ')
+                if last_space > start + (chunk_size * 0.8):  # Only if we don't lose too much content
+                    end = start + last_space
+                    chunk = text[start:end]
+            
+            chunk = chunk.strip()
+            if chunk:  # Only add non-empty chunks
+                chunks.append(chunk)
+            
+            if end >= text_length:
                 break
                 
             start = end - overlap
+            if start < 0:
+                start = end
         
         return chunks
     
@@ -266,6 +290,51 @@ class VectorStoreService:
             
         except Exception as e:
             logger.error(f"Failed to index document {source_file}: {e}")
+            return False
+    
+    async def index_document_with_chunks(
+        self, 
+        chunks: List[str],
+        source_file: str, 
+        course_id: int, 
+        chapter_name: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """Index a document using pre-generated chunks"""
+        try:
+            # Create document chunks from provided chunks
+            doc_chunks = []
+            for i, chunk_content in enumerate(chunks):
+                chunk_meta = metadata or {}
+                chunk_meta.update({
+                    'chunk_index': i,
+                    'total_chunks': len(chunks)
+                })
+                
+                doc_chunks.append(DocumentChunk(
+                    content=chunk_content,
+                    metadata=chunk_meta,
+                    chunk_id=f"{source_file}_chunk_{i}",
+                    source_file=source_file,
+                    course_id=course_id,
+                    chapter_name=chapter_name
+                ))
+            
+            # Generate embeddings
+            chunk_texts = [chunk.content for chunk in doc_chunks]
+            embeddings = self.embedding_service.encode_text(chunk_texts)
+            
+            if embeddings.size == 0:
+                logger.error("Failed to generate embeddings")
+                return False
+            
+            # Add to vector store
+            self.vector_store.add_documents(doc_chunks, embeddings)
+            logger.info(f"Successfully indexed document with pre-generated chunks: {source_file} ({len(chunks)} chunks)")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to index document with chunks {source_file}: {e}")
             return False
     
     async def search_documents(

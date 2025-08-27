@@ -29,7 +29,6 @@ a {
 a:hover {
   color: #7b96ff;
 }
-}
 
 body {
   margin: 0;
@@ -163,5 +162,4 @@ button:focus-visible {
   transform: scale(10, 10);
   opacity: 0;
   transition: transform 0.5s, opacity 1s;
-}
 }

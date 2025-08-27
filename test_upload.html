@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Upload Test</title>
+</head>
+<body>
+    <h1>PDF Upload Test</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div>
+            <label for="file">Choose PDF file:</label>
+            <input type="file" id="file" name="file" accept=".pdf" required>
+        </div>
+        <div>
+            <label for="course_id">Course ID:</label>
+            <input type="text" id="course_id" name="course_id" value="1" required>
+        </div>
+        <div>
+            <label for="chapter_name">Chapter Name:</label>
+            <input type="text" id="chapter_name" name="chapter_name" value="Test Chapter" required>
+        </div>
+        <div>
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" value="Test upload">
+        </div>
+        <button type="submit">Upload PDF</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+            
+            formData.append('file', file);
+            formData.append('course_id', document.getElementById('course_id').value);
+            formData.append('chapter_name', document.getElementById('chapter_name').value);
+            formData.append('description', document.getElementById('description').value);
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Uploading...';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/llm/upload-chapter-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<p style="color: green;">Success: ${result.message}</p>
+                                          <pre>${JSON.stringify(result, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${result.detail || result.message}</p>
+                                          <pre>${JSON.stringify(result, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Network Error: ${error.message}</p>`;
+                console.error('Upload error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

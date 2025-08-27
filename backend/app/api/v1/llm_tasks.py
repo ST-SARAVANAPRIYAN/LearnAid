@@ -159,10 +159,15 @@ async def upload_chapter_pdf(
         raise HTTPException(status_code=500, detail=f"Failed to upload PDF: {str(e)}")
 
 async def process_pdf_background(file_path: str, course_id: int, chapter_name: str, db: Session):
-    """Background task to process uploaded PDF"""
+    """Background task to process uploaded PDF and store in vector database"""
     try:
-        # Process PDF content
-        pdf_content = await pdf_service.process_pdf(file_path)
+        # Process PDF content with vector database storage (500 char chunks, 100 char overlap)
+        pdf_content = await pdf_service.process_pdf(
+            file_path=file_path,
+            course_id=course_id,
+            chapter_name=chapter_name,
+            extract_images=False
+        )
         
         # Update or create chapter with PDF info
         chapter = db.query(Chapter).filter(

@@ -42,22 +42,22 @@ import {
 const drawerWidth = 280;
 
 const facultyMenuItems = [
-  { text: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
-  { text: 'Courses', path: '/courses', icon: <SchoolIcon /> },
-  { text: 'Students', path: '/students', icon: <PeopleIcon /> },
-  { text: 'Exams', path: '/exams', icon: <QuizIcon /> },
-  { text: 'Tasks', path: '/tasks', icon: <AssignmentIcon /> },
-  { text: 'AI Task Generation', path: '/task-generation', icon: <AIIcon /> },
-  { text: 'Performance', path: '/performance', icon: <AssessmentIcon /> },
-  { text: 'Analytics', path: '/analytics', icon: <AnalyticsIcon /> },
+  { text: 'Dashboard', path: '/app/dashboard', icon: <DashboardIcon /> },
+  { text: 'Courses', path: '/app/courses', icon: <SchoolIcon /> },
+  { text: 'Students', path: '/app/students', icon: <PeopleIcon /> },
+  { text: 'Exams', path: '/app/exams', icon: <QuizIcon /> },
+  { text: 'Tasks', path: '/app/tasks', icon: <AssignmentIcon /> },
+  { text: 'AI Task Generation', path: '/app/task-generation', icon: <AIIcon /> },
+  { text: 'Performance', path: '/app/performance', icon: <AssessmentIcon /> },
+  { text: 'Analytics', path: '/app/analytics', icon: <AnalyticsIcon /> },
 ];
 
 const studentMenuItems = [
-  { text: 'Dashboard', path: '/student/dashboard', icon: <DashboardIcon /> },
-  { text: 'My Courses', path: '/student/courses', icon: <SchoolIcon /> },
-  { text: 'CIA Results', path: '/student/cia-results', icon: <QuizIcon /> },
-  { text: 'My Tasks', path: '/student/tasks', icon: <AssignmentIcon /> },
-  { text: 'Performance', path: '/student/performance', icon: <TrendingUp /> },
+  { text: 'Dashboard', path: '/app/student-dashboard', icon: <DashboardIcon /> },
+  { text: 'My Courses', path: '/app/student/courses', icon: <SchoolIcon /> },
+  { text: 'CIA Results', path: '/app/student/cia-results', icon: <QuizIcon /> },
+  { text: 'My Tasks', path: '/app/student/tasks', icon: <AssignmentIcon /> },
+  { text: 'Performance', path: '/app/student-performance', icon: <TrendingUp /> },
 ];
 
 interface LayoutProps {
@@ -297,7 +297,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   const newRole = userRole === 'faculty' ? 'student' : 'faculty';
                   setUserRole(newRole);
                   // Navigate to appropriate dashboard
-                  navigate(newRole === 'student' ? '/student/dashboard' : '/dashboard');
+                  navigate(newRole === 'student' ? '/app/student-dashboard' : '/app/dashboard');
                 }}
                 sx={{ 
                   color: 'white', 

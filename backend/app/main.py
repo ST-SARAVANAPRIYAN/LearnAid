@@ -20,8 +20,9 @@ from app.core.security import verify_token
 from app.api.v1 import auth, admin, faculty, student
 from app.api.v1.performance import router as performance_router
 from app.api.v1.student_dashboard import router as student_dashboard_router
-from app.api.v1.llm_tasks import router as llm_tasks_router
-from app.api.v1.chatbot import router as chatbot_router
+# from app.api.v1.llm_tasks import router as llm_tasks_router
+from app.api.v1.llm import router as llm_router
+# from app.api.v1.chatbot import router as chatbot_router
 
 # Configure logging
 logging.basicConfig(
@@ -252,17 +253,94 @@ app.include_router(
     dependencies=[Depends(get_current_student_user)]  # Students can access their own data
 )
 
-app.include_router(
-    llm_tasks_router,
-    tags=["LLM & Task Generation"]
-    # Note: LLM endpoints have individual authentication as needed
-)
+# app.include_router(
+#     llm_tasks_router,
+#     prefix="/api/v1/llm",
+#     tags=["LLM & Task Generation"],
+#     dependencies=[Depends(get_current_faculty_user)]  # Faculty can access LLM features
+# )
 
 app.include_router(
-    chatbot_router,
-    tags=["AI Chatbot & Self-Learning"]
-    # Note: Chatbot endpoints will have student authentication
+    llm_router,
+    prefix="/api/v1",
+    tags=["LLM Processing"]
+    # dependencies=[Depends(get_current_faculty_user)]  # Temporarily disabled for testing
 )
+
+# Temporary LLM endpoints (placeholders until full implementation)
+@app.get("/api/v1/llm/task-generation-stats", tags=["LLM Placeholder"])
+async def get_task_generation_stats():
+    """Placeholder endpoint for task generation stats."""
+    return {
+        "success": True,
+        "stats": {
+            "total_tasks_generated": 0,
+            "total_questions_generated": 0,
+            "active_courses": 0,
+            "weekly_schedule_status": "inactive"
+        }
+    }
+
+@app.post("/api/v1/llm/generate-questions", tags=["LLM Placeholder"])
+async def generate_questions():
+    """Placeholder endpoint for question generation."""
+    return {
+        "success": True,
+        "questions": [],
+        "message": "LLM service not configured. Please set up Groq API key."
+    }
+
+@app.post("/api/v1/llm/generate-personalized-task", tags=["LLM Placeholder"])
+async def generate_personalized_task():
+    """Placeholder endpoint for task generation."""
+    return {
+        "success": False,
+        "message": "LLM service not configured. Please set up Groq API key and dependencies."
+    }
+
+@app.post("/api/v1/llm/schedule-weekly-tasks", tags=["LLM Placeholder"])
+async def schedule_weekly_tasks():
+    """Placeholder endpoint for weekly task scheduling."""
+    return {
+        "success": False,
+        "message": "LLM service not configured. Please set up Groq API key and dependencies."
+    }
+
+@app.get("/api/v1/test-pdf-upload", tags=["Test Endpoints"])
+async def test_pdf_upload():
+    """Test endpoint to verify PDF upload with vector database storage."""
+    try:
+        from app.services.vector_service import vector_service
+        vector_stats = await vector_service.get_statistics()
+        
+        return {
+            "success": True,
+            "message": "PDF upload system ready",
+            "vector_database": {
+                "available": True,
+                "total_chunks": vector_stats.get("total_chunks", 0),
+                "courses_indexed": vector_stats.get("courses_indexed", 0),
+                "embedding_model": vector_stats.get("embedding_model", "unknown"),
+                "vector_dimension": vector_stats.get("vector_dimension", 384)
+            },
+            "chunking_config": {
+                "chunk_size": 500,
+                "overlap": 100,
+                "unit": "characters"
+            }
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"PDF upload system error: {str(e)}",
+            "error": str(e)
+        }
+
+# app.include_router(
+#     chatbot_router,
+#     tags=["AI Chatbot & Self-Learning"]
+#     # Note: Chatbot endpoints will have student authentication
+# )
 
 
 # Error handlers

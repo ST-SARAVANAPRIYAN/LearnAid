@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Upload Direct Test</title>
+</head>
+<body>
+    <h1>PDF Upload Direct Test</h1>
+    
+    <h2>Test 1: Health Check</h2>
+    <button onclick="testHealth()">Test Health</button>
+    <div id="healthResult"></div>
+    
+    <h2>Test 2: Upload Endpoint</h2>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept=".pdf">
+        <input type="text" id="courseId" placeholder="Course ID" value="1">
+        <input type="text" id="chapterName" placeholder="Chapter Name" value="Test Chapter">
+        <button type="button" onclick="testUpload()">Test Upload</button>
+    </form>
+    <div id="uploadResult"></div>
+    
+    <script>
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const result = await response.json();
+                resultDiv.innerHTML = `<p style="color: green;">✅ Health Check: ${response.status}</p><pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ Health Check Failed: ${error.message}</p>`;
+            }
+        }
+        
+        async function testUpload() {
+            const resultDiv = document.getElementById('uploadResult');
+            const fileInput = document.getElementById('fileInput');
+            const courseId = document.getElementById('courseId').value;
+            const chapterName = document.getElementById('chapterName').value;
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<p style="color: red;">Please select a file</p>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('course_id', courseId);
+            formData.append('chapter_name', chapterName);
+            formData.append('description', 'Test upload');
+            
+            resultDiv.innerHTML = '<p>Uploading...</p>';
+            
+            try {
+                console.log('Uploading to:', 'http://localhost:8000/api/v1/llm/upload-chapter-pdf');
+                console.log('File:', fileInput.files[0]);
+                console.log('Course ID:', courseId);
+                console.log('Chapter:', chapterName);
+                
+                const response = await fetch('http://localhost:8000/api/v1/llm/upload-chapter-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+                
+                if (response.ok) {
+                    try {
+                        const result = JSON.parse(responseText);
+                        resultDiv.innerHTML = `<p style="color: green;">✅ Upload Success: ${response.status}</p><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                    } catch (parseError) {
+                        resultDiv.innerHTML = `<p style="color: green;">✅ Upload Success: ${response.status}</p><p>Response: ${responseText}</p>`;
+                    }
+                } else {
+                    try {
+                        const error = JSON.parse(responseText);
+                        resultDiv.innerHTML = `<p style="color: red;">❌ Upload Failed: ${response.status}</p><pre>${JSON.stringify(error, null, 2)}</pre>`;
+                    } catch (parseError) {
+                        resultDiv.innerHTML = `<p style="color: red;">❌ Upload Failed: ${response.status}</p><p>Response: ${responseText}</p>`;
+                    }
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">❌ Network Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
