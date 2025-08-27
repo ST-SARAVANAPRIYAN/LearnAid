@@ -173,42 +173,53 @@ class ExamResponse(Base):
         return f"<ExamResponse(id={self.id}, question_id={self.question_id}, marks={self.marks_obtained})>"
 
 
-class StudentPerformance(Base):
+class StudentChapterPerformance(Base):
     """
-    Model for tracking student performance by chapter.
-    Auto-calculated from exam results and task completions.
+    Model for tracking individual student performance by chapter.
+    Auto-calculated from CIA exam results to identify students needing task assignments.
     """
-    __tablename__ = "student_performance"
+    __tablename__ = "student_chapter_performance"
     
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapters.id"), nullable=False)
     
-    # Performance metrics
-    total_assessments = Column(Integer, default=0)  # Total questions/tasks in this chapter
-    correct_answers = Column(Integer, default=0)
+    # CIA Exam Performance Tracking
+    cia_exams_taken = Column(Integer, default=0)  # Number of CIA exams including this chapter
+    total_questions_attempted = Column(Integer, default=0)  # Total questions from this chapter
     total_marks_obtained = Column(Float, default=0.0)
     total_marks_possible = Column(Float, default=0.0)
     
-    # Calculated performance
-    accuracy_percentage = Column(Float, default=0.0)
-    performance_score = Column(Float, default=0.0)  # Weighted score
+    # Calculated Performance Metrics
+    chapter_accuracy_percentage = Column(Float, default=0.0)  # Percentage for this specific chapter
+    performance_score = Column(Float, default=0.0)  # Weighted performance score
     
-    # Performance categorization
-    performance_level = Column(String(20), default="needs_improvement")  # excellent, good, average, needs_improvement
-    weakness_areas = Column(Text, nullable=True)  # JSON list of specific weak topics
+    # Performance Classification
+    performance_level = Column(String(20), default="needs_improvement")  # excellent, good, average, poor, needs_improvement
+    is_weak_chapter = Column(Boolean, default=False)  # True if student performs poorly in this chapter
+    weakness_threshold = Column(Float, default=50.0)  # Threshold below which student needs help
     
-    # Progress tracking
+    # Task Assignment Tracking
+    tasks_assigned = Column(Integer, default=0)  # Number of remedial tasks assigned
+    tasks_completed = Column(Integer, default=0)  # Number of tasks completed
+    improvement_after_tasks = Column(Float, default=0.0)  # Performance improvement after tasks
+    
+    # Progress Monitoring
     improvement_trend = Column(String(20), default="stable")  # improving, declining, stable
-    last_assessment_date = Column(DateTime, nullable=True)
+    last_cia_exam_date = Column(DateTime, nullable=True)
+    last_task_assigned_date = Column(DateTime, nullable=True)
+    next_task_due_date = Column(DateTime, nullable=True)
+    
+    # Performance History (JSON)
+    performance_history = Column(JSON, nullable=True)  # Store historical performance data
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    student = relationship("Student", back_populates="performance_records")
-    chapter = relationship("Chapter", back_populates="performance_records")
+    student = relationship("Student", back_populates="chapter_performance_records")
+    chapter = relationship("Chapter", back_populates="student_performance_records")
     
     def __repr__(self):
-        return f"<StudentPerformance(student_id={self.student_id}, chapter_id={self.chapter_id}, level={self.performance_level})>"
+        return f"<StudentChapterPerformance(student_id={self.student_id}, chapter_id={self.chapter_id}, weak={self.is_weak_chapter})>"

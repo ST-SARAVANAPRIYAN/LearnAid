@@ -85,7 +85,7 @@ class Chapter(Base):
     course = relationship("Course", back_populates="chapters")
     exam_questions = relationship("ExamQuestion", back_populates="chapter")
     tasks = relationship("Task", back_populates="chapter")
-    performance_records = relationship("StudentPerformance", back_populates="chapter")
+    student_performance_records = relationship("StudentChapterPerformance", back_populates="chapter")
     
     def __repr__(self):
         return f"<Chapter(id={self.id}, number={self.chapter_number}, title={self.title})>"

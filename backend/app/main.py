@@ -18,6 +18,8 @@ from app.core.security import verify_token
 
 # Import API routers
 from app.api.v1 import auth, admin, faculty, student
+from app.api.v1.performance import router as performance_router
+from app.api.v1.student_dashboard import router as student_dashboard_router
 
 # Configure logging
 logging.basicConfig(
@@ -187,8 +189,9 @@ async def health_check():
     try:
         # Test database connection
         from app.core.database import engine
+        from sqlalchemy import text
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
         
         return {
             "status": "healthy",
@@ -231,6 +234,20 @@ app.include_router(
     prefix="/api/v1/student",
     tags=["Student"],
     dependencies=[Depends(get_current_student_user)]
+)
+
+app.include_router(
+    performance_router,
+    prefix="/api/v1",
+    tags=["Performance Analytics"],
+    dependencies=[Depends(get_current_faculty_user)]  # Faculty can access performance data
+)
+
+app.include_router(
+    student_dashboard_router,
+    prefix="/api/v1",
+    tags=["Student Dashboard"],
+    dependencies=[Depends(get_current_student_user)]  # Students can access their own data
 )
 
 

@@ -12,10 +12,12 @@ import enum
 
 class TaskType(enum.Enum):
     """Types of tasks in the system."""
+    FREQUENT_ASSESSMENT = "frequent_assessment"  # Main type for poor-performing students
     DAILY = "daily"
+    BI_DAILY = "bi_daily"  # Every 2 days
     WEEKLY = "weekly"
-    REMEDIAL = "remedial"  # For weak chapters
-    SELF_STUDY = "self_study"
+    REMEDIAL = "remedial"  # For students who performed poorly in CIA exams
+    PRACTICE = "practice"  # Regular practice tasks
     ASSIGNMENT = "assignment"
 
 
@@ -28,8 +30,8 @@ class TaskDifficulty(enum.Enum):
 
 class Task(Base):
     """
-    Task model for student assignments and practice.
-    Tasks can be auto-generated based on weak chapters or manually created.
+    Task model for frequent assessments and student improvement.
+    Tasks are assigned to students who performed poorly in specific chapters during CIA exams.
     """
     __tablename__ = "tasks"
     
@@ -37,32 +39,46 @@ class Task(Base):
     title = Column(String(255), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     chapter_id = Column(Integer, ForeignKey("chapters.id"), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("faculty.id"), nullable=True)  # Can be auto-generated
     
     # Task details
     description = Column(Text, nullable=True)
-    task_type = Column(String(20), nullable=False)  # daily, weekly, remedial
+    task_type = Column(String(30), nullable=False)  # frequent_assessment, daily, bi_daily, remedial
     difficulty_level = Column(String(20), default="medium")
     
-    # Content
-    reading_material = Column(Text, nullable=True)  # Study material/instructions
+    # Target audience (students who need improvement)
+    target_performance_threshold = Column(Float, default=50.0)  # Students below this % get this task
+    target_student_count = Column(Integer, default=0)  # Number of students this task is assigned to
+    
+    # Content and Study Material
+    study_material = Column(Text, nullable=True)  # Reading material before test
+    study_time_minutes = Column(Integer, default=15)  # Time to study before test
+    reading_material = Column(Text, nullable=True)  # Additional reading content
+    
+    # Test Configuration
     total_questions = Column(Integer, default=0)
     total_marks = Column(Float, default=0.0)
     
-    # Timing and deadlines
-    estimated_duration_minutes = Column(Integer, default=30)
+    # Timing and Scheduling
+    estimated_duration_minutes = Column(Integer, default=30)  # Test duration
     due_date = Column(DateTime, nullable=True)
-    is_timed = Column(Boolean, default=False)
-    time_limit_minutes = Column(Integer, nullable=True)
+    is_timed = Column(Boolean, default=True)  # Frequent assessments should be timed
+    time_limit_minutes = Column(Integer, default=20)  # Test time limit
     
-    # Assignment settings
-    max_attempts = Column(Integer, default=3)
-    show_answers_after = Column(String(20), default="submission")  # submission, deadline, never
-    is_mandatory = Column(Boolean, default=True)
+    # Assignment settings for frequent assessments
+    max_attempts = Column(Integer, default=2)  # Limited attempts for assessments
+    show_answers_after = Column(String(20), default="submission")  # Show answers after submission
+    is_mandatory = Column(Boolean, default=True)  # Frequent assessments are mandatory
     
-    # AI Generation metadata
+    # Auto-generation for LLM-based tasks
     is_auto_generated = Column(Boolean, default=False)
-    generation_prompt = Column(Text, nullable=True)
-    source_content = Column(Text, nullable=True)  # PDF content used for generation
+    llm_generation_prompt = Column(Text, nullable=True)  # Prompt used for LLM generation
+    source_pdf_content = Column(Text, nullable=True)  # PDF content used for generation
+    llm_model_used = Column(String(100), nullable=True)  # Which LLM model was used
+    
+    # Assignment tracking
+    auto_assign_to_poor_performers = Column(Boolean, default=False)  # Auto-assign to students with low performance
+    performance_improvement_target = Column(Float, default=70.0)  # Target improvement percentage
     
     # Status
     is_published = Column(Boolean, default=False)
@@ -75,6 +91,7 @@ class Task(Base):
     # Relationships
     course = relationship("Course", back_populates="tasks")
     chapter = relationship("Chapter", back_populates="tasks")
+    created_by = relationship("Faculty", back_populates="tasks")
     questions = relationship("TaskQuestion", back_populates="task", cascade="all, delete-orphan")
     attempts = relationship("TaskAttempt", back_populates="task")
     assignments = relationship("TaskAssignment", back_populates="task")
@@ -128,8 +145,8 @@ class TaskQuestion(Base):
 
 class TaskAssignment(Base):
     """
-    Model for assigning tasks to specific students or classes.
-    Allows for personalized task distribution based on performance.
+    Model for assigning tasks to specific students based on their poor performance in chapters.
+    Tracks which students get which tasks and why.
     """
     __tablename__ = "task_assignments"
     
@@ -137,32 +154,47 @@ class TaskAssignment(Base):
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
     student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
     
-    # Assignment details
+    # Assignment details and reasoning
     assigned_date = Column(DateTime, default=datetime.utcnow)
     due_date = Column(DateTime, nullable=True)
     priority = Column(String(20), default="normal")  # high, normal, low
     
-    # Assignment reason (for auto-generated tasks)
-    assignment_reason = Column(String(100), nullable=True)  # "weak_chapter", "regular_practice"
-    performance_threshold = Column(Float, nullable=True)  # Performance that triggered this assignment
+    # Assignment reason - why this student got this task
+    assignment_reason = Column(String(200), nullable=True)  # "Poor CIA1 performance in Chapter 3 (35%)"
+    triggering_exam_id = Column(Integer, ForeignKey("exams.id"), nullable=True)  # Which exam triggered this assignment
+    student_chapter_performance = Column(Float, nullable=True)  # The poor performance % that triggered assignment
+    target_improvement_percentage = Column(Float, default=70.0)  # Target performance after this task
+    
+    # Assignment frequency settings
+    is_recurring = Column(Boolean, default=False)  # For daily/bi-daily assignments
+    recurrence_pattern = Column(String(50), nullable=True)  # "daily", "every_2_days", "weekly"
+    next_assignment_date = Column(DateTime, nullable=True)  # When to assign next similar task
     
     # Status tracking
     is_completed = Column(Boolean, default=False)
     completion_date = Column(DateTime, nullable=True)
+    performance_after_completion = Column(Float, nullable=True)  # Performance improvement measurement
     
-    # Notifications
+    # Notifications and reminders
     reminder_sent = Column(Boolean, default=False)
     reminder_count = Column(Integer, default=0)
+    last_reminder_date = Column(DateTime, nullable=True)
+    
+    # Auto-assignment metadata
+    is_auto_assigned = Column(Boolean, default=False)  # Was this auto-assigned by system?
+    auto_assignment_algorithm = Column(String(100), nullable=True)  # Which algorithm assigned this
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     task = relationship("Task", back_populates="assignments")
-    student = relationship("Student")  # Simple relationship for now
+    student = relationship("Student", back_populates="task_assignments")
+    triggering_exam = relationship("Exam")  # Which exam caused this assignment
     
     def __repr__(self):
-        return f"<TaskAssignment(id={self.id}, task_id={self.task_id}, student_id={self.student_id})>"
+        return f"<TaskAssignment(id={self.id}, task_id={self.task_id}, student_id={self.student_id}, reason={self.assignment_reason})>"
 
 
 class TaskAttempt(Base):
