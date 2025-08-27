@@ -11,6 +11,7 @@ import Exams from './pages/Exams';
 import Tasks from './pages/Tasks';
 import Performance from './pages/Performance';
 import Analytics from './pages/Analytics';
+import TaskGeneration from './pages/TaskGeneration';
 import Profile from './pages/Profile';
 import StudentDashboard from './pages/StudentDashboard';
 import StudentPerformanceAnalytics from './pages/StudentPerformanceAnalytics';
@@ -69,6 +70,7 @@ const App: React.FC = () => {
               <Route path="/students" element={<Students />} />
               <Route path="/exams" element={<Exams />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="/task-generation" element={<TaskGeneration />} />
               <Route path="/performance" element={<Performance />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/profile" element={<Profile />} />

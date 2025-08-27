@@ -38,6 +38,7 @@ import {
   CheckCircle,
   Warning,
 } from '@mui/icons-material';
+import AIChatbot from '../components/AIChatbot';
 
 interface StudentInfo {
   student_id: number;
@@ -709,6 +710,12 @@ const StudentDashboard: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* AI Chatbot */}
+      <AIChatbot
+        studentId={dashboardData.student_info.student_id}
+        courseId={undefined} // All courses accessible
+      />
     </Box>
   );
 };

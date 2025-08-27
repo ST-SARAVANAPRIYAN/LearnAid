@@ -20,6 +20,8 @@ from app.core.security import verify_token
 from app.api.v1 import auth, admin, faculty, student
 from app.api.v1.performance import router as performance_router
 from app.api.v1.student_dashboard import router as student_dashboard_router
+from app.api.v1.llm_tasks import router as llm_tasks_router
+from app.api.v1.chatbot import router as chatbot_router
 
 # Configure logging
 logging.basicConfig(
@@ -248,6 +250,18 @@ app.include_router(
     prefix="/api/v1",
     tags=["Student Dashboard"],
     dependencies=[Depends(get_current_student_user)]  # Students can access their own data
+)
+
+app.include_router(
+    llm_tasks_router,
+    tags=["LLM & Task Generation"]
+    # Note: LLM endpoints have individual authentication as needed
+)
+
+app.include_router(
+    chatbot_router,
+    tags=["AI Chatbot & Self-Learning"]
+    # Note: Chatbot endpoints will have student authentication
 )
 
 

@@ -36,6 +36,7 @@ import {
   Close as CloseIcon,
   TrendingUp,
   SwapHoriz as SwapIcon,
+  AutoAwesome as AIIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 280;
@@ -46,6 +47,7 @@ const facultyMenuItems = [
   { text: 'Students', path: '/students', icon: <PeopleIcon /> },
   { text: 'Exams', path: '/exams', icon: <QuizIcon /> },
   { text: 'Tasks', path: '/tasks', icon: <AssignmentIcon /> },
+  { text: 'AI Task Generation', path: '/task-generation', icon: <AIIcon /> },
   { text: 'Performance', path: '/performance', icon: <AssessmentIcon /> },
   { text: 'Analytics', path: '/analytics', icon: <AnalyticsIcon /> },
 ];
