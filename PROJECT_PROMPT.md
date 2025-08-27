@@ -5,8 +5,7 @@ The project stack is:
 - **Frontend:** React (Material UI / Tailwind)
 - **Backend:** FastAPI (Python 3.11+)
 - **Database:** SQLite (SQLAlchemy ORM)
-- **ML/LLM:** HuggingFace or OpenAI API + FAISS/ChromaDB for embeddings
-- **Authentication:** JWT-based auth
+- **ML/LLM:**  groq api or local llm+ FAISS/ChromaDB for embeddings
 
 ---
 
@@ -25,19 +24,31 @@ The project stack is:
 - **Course Management**:
   - Create courses (name, dept, overview, chapters, topics).
   - Upload **chapter PDFs** (stored for chatbot & task generation).
-- **Exam Management (CIA exams)**:
-  - Create exam (CIA1, CIA2…).
-  - Define questions (number, mark, chapter mapping).
-  - Example: CIA1 has 12 questions → map Q1-3 → Chapter1, Q4-6 → Chapter2, etc.
-  - Enter student **question-wise marks**.
-  - System auto-calculates **chapter performance**.
-- **Task Assignment**:
-  - Auto-generate daily/weekly tasks from weak chapters.
-  - Tasks = reading material + MCQ assessment.
-  - Generate questions from uploaded PDF using LLM or create manually.
-- **Performance Analytics**:
-  - View class-level reports, chapter weaknesses, progress over time.
-  - Export as charts (bar, radar, line).
+
+#### **Exam Management (Offline CIA Assessments)**:
+- **Create CIA Exams** (CIA1, CIA2, CIA3, Semester):
+  - Define exam structure: total questions, marks distribution, duration.
+  - **Question-Chapter Mapping**: Map each question to specific chapters.
+  - Example: CIA1 (50 marks total):
+    - Q1-3 (2 marks each) → Chapter 1
+    - Q4-6 (2 marks each) → Chapter 2  
+    - Q7-10 (2 marks each) → Chapter 3
+    - Q11 (15 marks) → Chapter 1
+    - Q12 (15 marks) → Chapter 2
+- **Mark Entry & Performance Calculation**:
+  - Enter student marks for **each individual question**.
+  - System auto-calculates **chapter-wise performance** based on question mapping.
+  - Generate performance reports showing student weaknesses by chapter.
+
+### **Frequent Assessments (Task-based)**
+- **Task Assignment System**: 
+  - Auto-generate tasks for students who performed poorly in specific chapters from CIA exams
+  - MCQ assessment APIs with timed tests
+  - Task completion tracking and progress monitoring
+  - Individual student task scheduling (daily/bi-daily based on performance gaps)
+
+- **Student Performance Analytics**: Individual student progress tracking with chapter-wise performance breakdown and personalized task assignments
+- **Task Management**: Assign targeted tasks to students who performed poorly in specific chapters, with automated scheduling and progress tracking
 
 ### 3. Student Module
 - View assigned courses, chapters, and exam performance (chapter-wise breakdown).

@@ -8,7 +8,7 @@ from .user import User, UserRole, Department, Student, Faculty
 from .course import Course, Chapter, CourseEnrollment
 from .exam import (
     Exam, ExamType, ExamQuestion, ExamResult, 
-    ExamResponse, StudentPerformance
+    ExamResponse, StudentChapterPerformance
 )
 from .task import (
     Task, TaskType, TaskDifficulty, TaskQuestion,
@@ -25,7 +25,7 @@ __all__ = [
     
     # Exam models
     "Exam", "ExamType", "ExamQuestion", "ExamResult", 
-    "ExamResponse", "StudentPerformance",
+    "ExamResponse", "StudentChapterPerformance",
     
     # Task models
     "Task", "TaskType", "TaskDifficulty", "TaskQuestion",

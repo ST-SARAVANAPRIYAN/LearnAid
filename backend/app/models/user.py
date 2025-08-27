@@ -101,7 +101,8 @@ class Student(Base):
     enrollments = relationship("CourseEnrollment", back_populates="student")
     exam_results = relationship("ExamResult", back_populates="student")
     task_attempts = relationship("TaskAttempt", back_populates="student")
-    performance_records = relationship("StudentPerformance", back_populates="student")
+    task_assignments = relationship("TaskAssignment", back_populates="student")
+    chapter_performance_records = relationship("StudentChapterPerformance", back_populates="student")
     
     def __repr__(self):
         return f"<Student(id={self.id}, student_id={self.student_id}, class={self.class_name})>"
@@ -136,6 +137,7 @@ class Faculty(Base):
     department = relationship("Department", back_populates="faculty_members")
     courses = relationship("Course", back_populates="faculty")
     exams = relationship("Exam", back_populates="created_by")
+    tasks = relationship("Task", back_populates="created_by")
     
     def __repr__(self):
         return f"<Faculty(id={self.id}, employee_id={self.employee_id}, designation={self.designation})>"
